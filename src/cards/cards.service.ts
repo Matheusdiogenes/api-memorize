@@ -56,6 +56,7 @@ export class CardsService {
       },
       data: {
         level: 1,
+        nextReview: moment().format(),
         response: false
       }
     })
