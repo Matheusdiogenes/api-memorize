@@ -1,26 +1,71 @@
 import { Injectable } from '@nestjs/common';
+import * as moment from 'moment';
+import { PrismaService } from 'src/prisma.service';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
 
 @Injectable()
 export class CardsService {
-  create(createCardDto: CreateCardDto) {
-    return 'This action adds a new card';
+  constructor(private prisma: PrismaService) { }
+
+  async create(createCardDto: CreateCardDto) {
+    return await this.prisma.cards.create({
+      data: createCardDto
+    });
   }
 
-  findAll() {
-    return `This action returns all cards`;
+  async findAll() {
+    return await this.prisma.cards.findMany();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} card`;
+  async findOne(id: number) {
+    return await this.prisma.cards.findUnique({
+      where: {
+        id: Number(id)
+      }
+    });
   }
 
-  update(id: number, updateCardDto: UpdateCardDto) {
-    return `This action updates a #${id} card`;
+  async update(id: number, updateCardDto: UpdateCardDto) {
+    const nextLevel = await this.prisma.cards.findUnique({
+      where: {
+        id: Number(id)
+      }
+    })
+
+    const cardAge = nextLevel.nextReview.getFullYear() - nextLevel.createdAt.getFullYear()
+    if(cardAge > 200) return {message: "Card not exists."}
+    
+    const nextDay = moment().add(nextLevel.level * 2 - 1, 'days').format()
+
+    if (updateCardDto.response) {
+      return await this.prisma.cards.update({
+        where: {
+          id: Number(id)
+        },
+        data: {
+          level: nextLevel.level * 2,
+          nextReview: nextDay,
+          response: true
+        }
+      });
+    }
+    return await this.prisma.cards.update({
+      where: {
+        id: Number(id)
+      },
+      data: {
+        level: 1,
+        response: false
+      }
+    })
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} card`;
+  async remove(id: number) {
+    return await this.prisma.cards.delete({
+      where: {
+        id: Number(id)
+      }
+    });
   }
 }
