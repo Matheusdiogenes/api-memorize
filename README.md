@@ -32,7 +32,7 @@ Exemplo:
 $ npm install
 ```
 
-## Running the app
+## Run
 
 ```bash
 # development
