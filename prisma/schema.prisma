@@ -12,7 +12,7 @@ model User {
   email    String  @unique
   name     String
   password String
-  posts    Cards[]
+  cards    Cards[]
 }
 
 model Cards {
@@ -21,9 +21,9 @@ model Cards {
   back       String
   nextReview DateTime @default(now())
   level      Int      @default(1)
-  response   Boolean
+  response   Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  author     User?    @relation(fields: [authorId], references: [id])
-  authorId   Int?
+  author     User     @relation(fields: [authorId], references: [id])
+  authorId   Int
 }
