@@ -21,6 +21,7 @@ model Cards {
   back       String
   nextReview DateTime @default(now())
   level      Int      @default(1)
+  response   Boolean
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   author     User?    @relation(fields: [authorId], references: [id])
