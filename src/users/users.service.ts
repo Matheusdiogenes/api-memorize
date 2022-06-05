@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { PrismaService } from 'src/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -8,37 +9,62 @@ export class UsersService {
   constructor(private prisma: PrismaService) { }
 
   async create(createUserDto: CreateUserDto) {
-    return this.prisma.user.create({
-      data: createUserDto
-    });
+    try {
+      const user = await this.prisma.user.create({
+        data: createUserDto
+      });
+      return user
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') throw new ForbiddenException('Credentials taken')
+      }
+      throw error
+    }
   }
 
   async findAll() {
-    return this.prisma.user.findMany();
+    const user = await this.prisma.user.findMany();
+    return user
   }
 
-  findOne(id: number) {
-    return this.prisma.user.findUnique({
-      where: {
-        id: Number(id)
-      }
-    });
+  async findOne(id: number) {
+    const user = await this.checkUserExist(id)
+    if (!user) return { msg: "User not found" }
+    return user
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return this.prisma.user.update({
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    const user = await this.checkUserExist(id)
+    if (!user) return { msg: "User not found" }
+
+    await this.prisma.user.update({
       where: {
         id: Number(id)
       },
       data: updateUserDto
     });
+    return { msg: 'User updated' }
   }
 
-  remove(id: number) {
-    return this.prisma.user.delete({
+  async remove(id: number) {
+    const user = await this.checkUserExist(id)
+    if (!user) return { msg: "User not found" }
+    
+    await this.prisma.user.delete({
       where: {
         id: Number(id)
       }
     });
+
+    return {msg: 'User deleted'}
+  }
+
+  async checkUserExist(id: number) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: Number(id)
+      }
+    });
+    return user
   }
 }
